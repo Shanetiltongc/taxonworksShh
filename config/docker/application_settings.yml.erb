@@ -1,10 +1,24 @@
 production:
   default_data_directory: <%= ENV['TW_PATHS_STAGING'] %>
   backup_directory: <%= ENV['TW_PATHS_BACKUP'] %>
+<%
+  # Comma-separated TW_EXCEPTION_RECIPIENTS; omit the whole block when unset so
+  # YAML is never `exception_recipients:` with a null/blank value (breaks boot).
+  tw_exception_recipients = ENV['TW_EXCEPTION_RECIPIENTS'].to_s.split(',').map(&:strip).reject(&:empty?)
+  tw_en_email_prefix = ENV['TW_EXCEPTION_NOTIFICATION_EMAIL_PREFIX'].to_s
+  tw_en_email_prefix = '[TW-Error] ' if tw_en_email_prefix.strip.empty?
+  tw_en_sender = ENV['TW_EXCEPTION_NOTIFICATION_SENDER_ADDRESS'].to_s
+  tw_en_sender = '"notifier" <notifier@example.com>' if tw_en_sender.strip.empty?
+%>
+<% if tw_exception_recipients.any? %>
   exception_notification:
-    email_prefix: <%= ENV['TW_EXCEPTION_NOTIFICATION_EMAIL_PREFIX'] %>
-    sender_address:  <%= ENV['TW_EXCEPTION_NOTIFICATION_SENDER_ADDRESS'] %>
-    exception_recipients: <%= ENV['TW_EXCEPTION_RECIPIENTS'] %>
+    email_prefix: <%= tw_en_email_prefix.inspect %>
+    sender_address: <%= tw_en_sender.inspect %>
+    exception_recipients:
+<% tw_exception_recipients.each do |email| %>
+      - <%= email.inspect %>
+<% end %>
+<% end %>
   action_mailer_smtp_settings:
     address: <%= ENV['TW_ACTION_MAILER_SMTP_SETTINGS_ADDRESS'] %>
     port: <%= ENV['TW_ACTION_MAILER_SMTP_SETTINGS_PORT'] %>

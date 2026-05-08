@@ -170,11 +170,19 @@ module Settings
     invalid = settings.keys - EXCEPTION_NOTIFICATION_SETTINGS
     raise Error, "#{invalid} are not valid settings for exception_notification" unless invalid.empty?
 
-    settings[:exception_recipients] = settings[:exception_recipients].split(',') unless settings[:exception_recipients].class == Array || settings[:exception_recipients].blank?
+    rec = settings[:exception_recipients]
+    unless rec.class == Array || rec.blank?
+      unless rec.is_a?(String)
+        raise Error, ':exception_recipients must be a YAML list of emails, a comma-separated string, or omitted when using Docker/Railway env (see config/application_settings.yml.example)'
+      end
+      settings[:exception_recipients] = rec.split(',')
+    end
 
     settings[:sections] = %w{github_link request session environment backtrace full_backtrace}
 
-    raise Error, ':exception_recipients must be an Array' unless settings[:exception_recipients].class == Array
+    unless settings[:exception_recipients].class == Array
+      raise Error, ':exception_recipients must be an Array after parsing (use a YAML list or comma-separated string; blank values are invalid — see config/application_settings.yml.example)'
+    end
 
     settings
   end
